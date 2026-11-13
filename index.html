@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gracie BJJ Challenge</title>
+<style>
+body{margin:0;background:#111;color:white;font-family:Arial,sans-serif;padding:18px}
+main{max-width:520px;margin:auto}
+h1{color:#facc15;text-align:center}
+.card{background:#222;border-radius:15px;padding:18px;margin:15px 0}
+button,select,input{box-sizing:border-box;width:100%;padding:14px;margin:6px 0;border-radius:9px;font-size:16px}
+button{background:#facc15;border:0;font-weight:bold;color:#111}
+input,select{background:#333;color:white;border:1px solid #777}
+.small{color:#ccc}
+</style>
+</head>
+<body>
+<main>
+<h1>🥋 GRACIE BJJ CHALLENGE</h1>
+<p style="text-align:center">Gracie Humaitá Curauma</p>
+<div class="card" id="setup">
+<input id="name" placeholder="Apodo del alumno" maxlength="20">
+<select id="belt">
+<option value="blanca">Faixa blanca</option>
+<option value="gris">Faixa gris/blanca</option>
+<option value="gris2">Faixa gris</option>
+<option value="amarilla">Faixa amarilla</option>
+</select>
+<button onclick="start('individual')">Entrenamiento individual</button>
+<button onclick="start('competencia')">Competencia local</button>
+<button onclick="ranking()">Ver ranking local</button>
+</div>
+<div class="card" id="game" hidden></div>
+</main>
+<script>
+const bank=[
+['blanca','¿Cuántos puntos vale la montada?',['2','3','4','5'],2],
+['blanca','¿Qué debes hacer si tu compañero se rinde?',['Soltar inmediatamente','Continuar','Esperar','Apretar más'],0],
+['blanca','¿Cuántos puntos vale un derribo válido?',['1','2','3','4'],1],
+['gris','¿Cuántos puntos vale pasar la guardia?',['2','3','4','5'],1],
+['gris','¿Qué técnica se utiliza para defender un ataque a las piernas?',['Sprawl','Armbar','Triángulo','Kimura'],0],
+['gris2','¿Cuántos puntos vale el control de espalda con ganchos?',['2','3','4','5'],2],
+['gris2','¿Cuántos puntos vale rodilla al abdomen?',['1','2','3','4'],1],
+['amarilla','¿Cuántos puntos vale un raspaje válido?',['1','2','3','4'],1],
+['amarilla','¿Qué significa tapear?',['Pedir rendición','Pasar guardia','Derribar','Montar'],0]
+];
+let pool=[],pos=0,points=0,mode='',player='';
+const game=document.getElementById('game');
+function start(m){
+player=document.getElementById('name').value.trim();
+if(!player){alert('Ingresa un apodo');return}
+mode=m;points=0;pos=0;
+const b=document.getElementById('belt').value;
+const order=['blanca','gris','gris2','amarilla'];
+pool=bank.filter(q=>order.indexOf(q[0])<=order.indexOf(b)).sort(()=>Math.random()-.5);
+document.getElementById('setup').hidden=true;game.hidden=false;show();
+}
+function show(){
+if(pos>=pool.length){finish();return}
+let q=pool[pos];
+game.innerHTML='<p class="small">Pregunta '+(pos+1)+' de '+pool.length+' · '+points+' puntos</p><h2>'+q[1]+'</h2>'+q[2].map((a,i)=>'<button onclick="answer('+i+')">'+a+'</button>').join('');
+}
+function answer(i){
+const correct=i===pool[pos][3];
+if(correct)points+=100;
+alert(correct?'¡Correcto! +100 puntos':'Respuesta correcta: '+pool[pos][2][pool[pos][3]]);
+pos++;show();
+}
+function finish(){
+if(mode==='competencia'){
+let records=JSON.parse(localStorage.getItem('gracieRanking')||'[]');
+records.push({name:player,points:points});
+localStorage.setItem('gracieRanking',JSON.stringify(records));
+}
+game.innerHTML='<h2>¡Desafío completado!</h2><h1>'+points+' puntos</h1><button onclick="ranking()">Ver ranking local</button><button onclick="home()">Volver al inicio</button>';
+}
+function ranking(){
+let records=JSON.parse(localStorage.getItem('gracieRanking')||'[]').sort((a,b)=>b.points-a.points).slice(0,10);
+document.getElementById('setup').hidden=true;game.hidden=false;
+game.innerHTML='<h2>🏆 Ranking de este celular</h2>'+(records.map((r,i)=>'<p>'+(i+1)+'. '+r.name.replace(/[<>&]/g,'')+' — '+r.points+' pts</p>').join('')||'<p>Aún no hay resultados</p>')+'<button onclick="home()">Volver</button>';
+}
+function home(){game.hidden=true;document.getElementById('setup').hidden=false}
+</script>
+</body>
+</html>
